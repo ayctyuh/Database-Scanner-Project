@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DBScanner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body{% if error_message %} class="has-modal"{% endif %}>
+<header class="hero">
+    <div class="hero-content">
+        <h1>DBScanner</h1>
+        <p>Quét nhanh cấu hình bảo mật của máy chủ cơ sở dữ liệu. Chỉ cần cung cấp thông tin kết nối để bắt đầu.</p>
+    </div>
+</header>
+<main class="layout single">
+    <section class="panel panel-form">
+        <h2>Thông tin kết nối</h2>
+        <form method="post" class="scan-form">
+            <div class="field-grid">
+                <label>
+                    Máy chủ (host)
+                    <input type="text" name="host" value="{{ defaults.host }}" required>
+                </label>
+                <label>
+                    Cổng (port)
+                    <input type="number" name="port" value="{{ defaults.port }}" required>
+                </label>
+            </div>
+            <div class="field-grid">
+                <label>
+                    Tên đăng nhập
+                    <input type="text" name="username" value="{{ defaults.username }}" required>
+                </label>
+                <label>
+                    Mật khẩu
+                    <input type="password" name="password" value="{{ defaults.password }}">
+                </label>
+            </div>
+            <label class="checkbox">
+                <input type="checkbox" name="use_ssl" {% if defaults.use_ssl %}checked{% endif %}>
+                Bật SSL khi máy chủ hỗ trợ
+            </label>
+            <button type="submit" class="primary">Bắt đầu quét</button>
+        </form>
+        <p class="note">Lưu ý: Ứng dụng chỉ đọc cấu hình; không chỉnh sửa dữ liệu và không khai thác lỗ hổng.</p>
+    </section>
+</main>
+<div id="connection-error-modal" class="modal{% if error_message %} is-visible{% endif %}" aria-hidden="{% if error_message %}false{% else %}true{% endif %}">
+    <div class="modal-backdrop" role="presentation"></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="connection-error-title">
+        <h3 id="connection-error-title">Không thể kết nối tới database</h3>
+        <p>Vui lòng thử lại.</p>
+        {% if error_details %}
+            <p class="modal-detail">{{ error_details }}</p>
+        {% endif %}
+        <div class="modal-actions">
+            <button type="button" class="secondary" data-action="cancel">Cancel</button>
+            <button type="button" class="primary" data-action="retry">Retry</button>
+        </div>
+    </div>
+</div>
+<footer>
+    <small>DBScanner &copy; 2025 · Hỗ trợ nhiều nền tảng CSDL.</small>
+    <a class="footer-link" href="https://www.facebook.com/namdory13">Tìm hiểu về chúng tôi</a>
+</footer>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var modal = document.getElementById("connection-error-modal");
+        if (!modal) {
+            return;
+        }
+
+        var isVisible = modal.classList.contains("is-visible");
+        if (!isVisible) {
+            return;
+        }
+
+        var cancelButton = modal.querySelector('[data-action="cancel"]');
+        var retryButton = modal.querySelector('[data-action="retry"]');
+        var form = document.querySelector("form.scan-form");
+
+        if (retryButton) {
+            retryButton.focus();
+        }
+
+        function hideModal() {
+            modal.classList.remove("is-visible");
+            modal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("has-modal");
+        }
+
+        if (cancelButton) {
+            cancelButton.addEventListener("click", function () {
+                hideModal();
+            });
+        }
+
+        if (retryButton) {
+            retryButton.addEventListener("click", function () {
+                if (form) {
+                    retryButton.setAttribute("disabled", "disabled");
+                    form.submit();
+                } else {
+                    hideModal();
+                }
+            });
+        }
+
+        modal.addEventListener("click", function (event) {
+            if (event.target === modal || event.target.classList.contains("modal-backdrop")) {
+                hideModal();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                hideModal();
+            }
+        });
+    });
+</script>
+</body>
+</html>
